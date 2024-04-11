@@ -1,6 +1,7 @@
 from pathlib import Path
 from lexical.lexer import Lexer
 from syntactic.syntactic import analyze_syntax
+from semantic.semantic import analyze_semantic
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, END
 
 OUTPUT_PATH = Path(__file__).parent
@@ -28,7 +29,9 @@ def analyze(entry_1, entry_2):
         t, lexeme = token
         format_token = f'TOKEN: {t} - LEXEMA: {lexeme}'
     result_syntactic = analyze_syntax(result)
-    result_show.insert(0, result_syntactic)
+    print(result_syntactic[1])
+    analyze_semantic(result_syntactic[1])
+    result_show.insert(0, result_syntactic[0])
     entry_2.insert(END, "\n".join(map(str, result_show)))
 
 

@@ -133,9 +133,15 @@ def p_GV(p):
         | EMPTY
     '''
     if len(p) == 4:
-        p[0] = (p[1], p[2], p[3])
+        if p[3] is None:
+            p[0] = ("gv", p[1], p[2], None)
+        else:
+            p[0] = ("gv", p[1], p[2], None, p[3])
     elif len(p) == 6:
-        p[0] = (p[1], p[2], p[3], p[4], p[5])
+        if p[5] is None:
+            p[0] = ("gv", p[1], p[2], p[4])
+        else:
+            p[0] = ("gv", p[1], p[2], p[4], p[5])
     else:
         pass
 
@@ -176,10 +182,10 @@ def p_VA(p):
         | FALSE_VALUE
         | QUOTATION_MARKS V QUOTATION_MARKS
     '''
-    if len(p) == 4:
-        p[0] = (p[1], p[2], p[3])
-    else:
-        p[0] = p[1]
+    if len(p) == 4:  # Decimal or String
+        p[0] = float(p[1] + p[2] + p[3]) if '.' in p[2] else p[1] + p[2] + p[3]
+    else:  # Int or Boolean
+        p[0] = int(p[1]) if p[1].isdigit() else False if p[1] == "False" else True
 
 
 # Grammar of conditional declaration
@@ -190,9 +196,9 @@ def p_GC(p):
         | EMPTY
     '''
     if len(p) == 9:
-        p[0] = (p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8])
+        p[0] = ("gc", p[3], p[6], p[8])
     elif len(p) == 8:
-        p[0] = (p[1], p[2], p[3], p[4], p[5], p[6], p[7])
+        p[0] = ("gc", p[3], None, p[7])
     else:
         pass
 
@@ -243,15 +249,24 @@ def p_GF(p):
         | EMPTY
     '''
     if len(p) == 10:
-        p[0] = (p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9])
-    elif len(p) == 12:
-        p[0] = (p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11])
+        if p[4] == ">":
+            p[0] = ("gf", p[1], p[2], None, p[6], p[7], p[9])
+        else:
+            p[0] = ("gf", p[1], p[2], p[4], None, p[7], p[9])
     elif len(p) == 9:
-        p[0] = (p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8])
+        if p[2] == "<":
+            p[0] = ("gf", None, p[1], p[3], p[6], None, p[8])
+        else:
+            p[0] = ("gf", p[1], p[2], None, None, p[6], p[8])
     elif len(p) == 11:
-        p[0] = (p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10])
+        p[0] = ("gf", p[1], p[2], p[4], p[7], p[8], p[10])
     elif len(p) == 8:
-        p[0] = (p[1], p[2], p[3], p[4], p[5], p[6], p[7])
+        if p[3] == ">":
+            p[0] = ("gf", None, p[1], None, p[5], None, p[7])
+        else:
+            p[0] = ("gf", None, p[1], p[3], None, None, p[7])
+    elif len(p) == 7:
+        p[0] = ("gf", None, p[1], None, None, None, p[6])
     else:
         pass
 
@@ -285,7 +300,7 @@ def p_RT(p):
     '''
     RT : RETURN V
     '''
-    p[0] = (p[1], p[2])
+    p[0] = p[2]
 
 
 # Grammar of cycle declaration
@@ -296,9 +311,9 @@ def p_GCF(p):
         | EMPTY
     '''
     if len(p) == 9:
-        p[0] = (p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8])
+        p[0] = ("gcf", p[3], p[6], p[8])
     elif len(p) == 8:
-        p[0] = (p[1], p[2], p[3], p[4], p[5], p[6], [7])
+        p[0] = ("gcf", p[3], None, p[7])
     else:
         pass
 
@@ -316,7 +331,7 @@ def p_CDF(p):
     '''
     CDF : NUMBER SE NUMBER SE O
     '''
-    p[0] = (p[1], p[2], p[3], p[4], p[5])
+    p[0] = (int(p[1]), int(p[3]), p[5])
 
 
 # Separate or
@@ -401,6 +416,49 @@ def analyze_syntax(tokens):
     input_entry = ""
     for token, lexeme in tokens:
         input_entry += f'{lexeme} '
+    # entry = []
+    # content = 0
+    # content_body = {}
+    # for index, (token, lexeme) in enumerate(tokens):
+    #     if token == 'OPEN_BODY':
+    #         content += 1
+    #         entry.append((index, index))
+    #     elif token == 'LESS_OR_EQUAL':
+    #         content -= 1
+    #         content_body[index] = (token, lexeme)
+    #
+    #     if content == 0 and token != 'LESS_OR_EQUAL':
+    #         entry.append((token, lexeme))
+    #     else:
+    #         content_body[index] = (token, lexeme)
+    #
+    #
+    # structure = []
+    # structures = []
+    # for index, (token, lexeme) in enumerate(entry):
+    #     if token == lexeme:
+    #         copy_token = token
+    #         copy_body = content_body.copy()
+    #         for key, value in copy_body.items():
+    #             if key == copy_token:
+    #                 content_body.pop(key)
+    #                 structure.append(value[1])
+    #                 copy_token += 1
+    #     else:
+    #         if token == 'INTEGER_TYPE' or token == 'BOOLEAN_TYPE' or (token == 'VARIABLE' and lexeme == 'Dcm') or token == 'STRING_TYPE' or token == 'IF' or token == 'FOR' or (
+    #                 (entry[index - 1][0] == 'VARIABLE' and entry[index - 1][1] != 'Dcm') and token == 'VARIABLE'):
+    #             if index > 0:
+    #                 structures.append(structure[:])
+    #                 structure.clear()
+    #         structure.append(lexeme)
+    #
+    #     if (len(entry) - 1) == index:
+    #         structures.append(structure[:])
+    #         structure.clear()
+    #
+    # for s in reversed(structures):
+    #     for entry_value in s:
+    #         input_entry += f'{entry_value} '
 
     # lexer.input(input_entry)
     # for t in lexer:
@@ -409,12 +467,12 @@ def analyze_syntax(tokens):
     validated_entry = parser.parse(input_entry)
     if type(validated_entry) is tuple and len(errors) == 0:
         error_value = None, None
-        return f'CADENA VALIDA \n'
+        return f'CADENA VALIDA \n', validated_entry
     elif validated_entry is tuple and len(errors) > 0:
-        return f'CADENA INVALIDA {errors[0][1]} \n'
+        return f'CADENA INVALIDA {errors[0][1]} \n', validated_entry
     elif validated_entry is None and len(errors) > 0:
-        return f'CADENA INVALIDA {errors[0][1]} \n'
+        return f'CADENA INVALIDA {errors[0][1]} \n', validated_entry
     else:
         value_error = f'CADENA INVALIDA {error_value[1]} \n'
         error_value = None, None
-        return value_error
+        return value_error, validated_entry
